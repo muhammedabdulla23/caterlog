@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f0f0f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CaterLog">
+<meta name="description" content="Catering job and payment tracker">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<title>CaterLog</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --border: #2e2e2e;
+    --accent: #f0c040;
+    --accent2: #e07830;
+    --green: #4ade80;
+    --red: #f87171;
+    --text: #f0ede8;
+    --muted: #888;
+    --radius: 10px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'DM Mono', monospace; min-height: 100vh;
+    padding-bottom: calc(70px + var(--safe-bottom));
+    padding-top: var(--safe-top);
+  }
+
+  /* TOP HEADER */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    padding-top: calc(14px + var(--safe-top));
+  }
+  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.25rem; }
+  .logo span { color: var(--accent); }
+  .header-right { display: flex; gap: 8px; align-items: center; }
+  .icon-btn {
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center;
+    justify-content: center; cursor: pointer; font-size: 1rem;
+  }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--surface); border-top: 1px solid var(--border);
+    display: flex; padding-bottom: var(--safe-bottom); z-index: 100;
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    padding: 10px 0; cursor: pointer; color: var(--muted); transition: color 0.2s;
+    font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px; gap: 3px;
+    border: none; background: none; font-family: 'DM Mono', monospace;
+  }
+  .nav-item .nav-icon { font-size: 1.3rem; line-height: 1; }
+  .nav-item.active { color: var(--accent); }
+  .nav-item.add-btn { color: #000; }
+  .nav-item.add-btn .nav-icon {
+    background: var(--accent); border-radius: 14px; padding: 6px 18px;
+    font-size: 1.4rem; color: #000;
+  }
+
+  /* VIEWS */
+  .view { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .view.active { display: block; }
+
+  /* STAT CARDS */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 16px;
+  }
+  .stat-card .label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+  .stat-card .value { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 700; }
+  .stat-card.accent-card { border-color: var(--accent); }
+  .stat-card.accent-card .value { color: var(--accent); }
+  .stat-card.green-card .value { color: var(--green); }
+  .stat-card.red-card .value { border-color: #3a1010; }
+  .stat-card.red-card .value { color: var(--red); }
+  .stat-card.orange-card .value { color: var(--accent2); }
+
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; margin-top: 4px; }
+  .section-title { font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 700; }
+
+  /* FILTER */
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .filter-bar input, .filter-bar select {
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); padding: 9px 12px; border-radius: 8px;
+    font-family: 'DM Mono', monospace; font-size: 0.8rem; flex: 1; min-width: 100px;
+  }
+  .filter-bar input:focus, .filter-bar select:focus { outline: none; border-color: var(--accent); }
+
+  /* JOB CARDS */
+  .job-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 15px; margin-bottom: 10px;
+  }
+  .job-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .job-employer { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.95rem; }
+  .job-date { font-size: 0.72rem; color: var(--muted); }
+  .job-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .badge { font-size: 0.65rem; padding: 3px 8px; border-radius: 4px; border: 1px solid; }
+  .badge-type { background: #1e1a0e; border-color: #5a4010; color: var(--accent); }
+  .badge-site { background: #0e1820; border-color: #103050; color: #60b0f0; }
+  .badge-boys { background: #1a1020; border-color: #402060; color: #c080f0; }
+
+  .job-payments { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; margin-bottom: 12px; }
+  .pay-block { background: var(--surface2); border-radius: 6px; padding: 8px; text-align: center; }
+  .pay-block .plabel { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+  .pay-block .pamount { font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 700; }
+  .pay-block.owed .pamount { color: var(--green); }
+  .pay-block.boys-pay .pamount { color: var(--red); }
+  .pay-block.net .pamount { color: var(--accent); }
+
+  .boys-section { margin-top: 8px; }
+  .boys-title { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .boy-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.8rem;
+  }
+  .boy-row:last-child { border-bottom: none; }
+  .boy-status {
+    font-size: 0.63rem; padding: 3px 8px; border-radius: 4px; cursor: pointer;
+    border: 1px solid; transition: all 0.15s; min-width: 68px; text-align: center;
+  }
+  .boy-status.pending { background: #2a1a00; color: #f0a000; border-color: #5a3a00; }
+  .boy-status.paid { background: #0a2a10; color: var(--green); border-color: #1a5a20; }
+
+  .employer-status-row { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .emp-status-btn {
+    font-size: 0.7rem; padding: 5px 12px; border-radius: 6px; cursor: pointer; border: 1px solid;
+    font-family: 'DM Mono', monospace; transition: all 0.15s;
+  }
+  .emp-status-btn.pending { background: #1a0a00; color: #f0a000; border-color: #5a3000; }
+  .emp-status-btn.paid { background: #082018; color: var(--green); border-color: #1a5a30; }
+  .delete-btn {
+    background: none; border: 1px solid #3a1010; color: var(--red); padding: 5px 10px;
+    border-radius: 6px; font-size: 0.68rem; cursor: pointer; font-family: 'DM Mono', monospace;
+  }
+
+  /* FORM */
+  .form-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+  .form-section-title { font-family: 'Syne', sans-serif; font-weight: 700; margin-bottom: 14px; font-size: 0.9rem; color: var(--accent); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .form-row.single { grid-template-columns: 1fr; }
+  .field-group { display: flex; flex-direction: column; gap: 5px; }
+  .field-group label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+  .field-group input, .field-group select, .field-group textarea {
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    padding: 10px 12px; border-radius: 7px; font-family: 'DM Mono', monospace; font-size: 0.85rem;
+    transition: border-color 0.2s; -webkit-appearance: none;
+  }
+  .field-group input:focus, .field-group select:focus, .field-group textarea:focus { outline: none; border-color: var(--accent); }
+  .field-group textarea { resize: none; min-height: 70px; }
+
+  #boys-container .boy-entry {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 12px; margin-bottom: 8px; position: relative;
+  }
+  .remove-boy { position: absolute; top: 8px; right: 8px; background: none; border: none; color: var(--red); cursor: pointer; font-size: 1.1rem; padding: 0; }
+  .add-boy-btn {
+    background: none; border: 1px dashed var(--border); color: var(--muted);
+    padding: 10px; width: 100%; border-radius: 7px; cursor: pointer;
+    font-family: 'DM Mono', monospace; font-size: 0.8rem; margin-bottom: 10px; transition: all 0.2s;
+  }
+  .add-boy-btn:hover, .add-boy-btn:active { border-color: var(--accent); color: var(--accent); }
+
+  .btn-primary {
+    background: var(--accent); color: #000; border: none; padding: 14px 24px;
+    border-radius: 9px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.95rem;
+    cursor: pointer; width: 100%; transition: opacity 0.2s; margin-bottom: 8px;
+  }
+  .btn-primary:active { opacity: 0.75; }
+
+  /* SUMMARY */
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; overflow-x: auto; }
+  .summary-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; min-width: 320px; }
+  .summary-table th { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+  .summary-table td { padding: 9px 10px; border-bottom: 1px solid #1e1e1e; }
+  .summary-table tr:last-child td { border-bottom: none; }
+
+  /* BACKUP PANEL */
+  .backup-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+  .backup-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem; margin-bottom: 12px; }
+  .backup-row { display: flex; gap: 8px; }
+  .btn-export, .btn-import {
+    flex: 1; padding: 11px; border-radius: 8px; font-family: 'DM Mono', monospace; font-size: 0.78rem; cursor: pointer; border: 1px solid; transition: opacity 0.2s;
+  }
+  .btn-export { background: #0e2010; color: var(--green); border-color: #1a5a20; }
+  .btn-import { background: #0e1830; color: #60b0f0; border-color: #103a70; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 0.82rem; }
+  .empty-state .icon { font-size: 2.5rem; margin-bottom: 10px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: calc(80px + var(--safe-bottom)); left: 50%; transform: translateX(-50%);
+    background: var(--surface); border: 1px solid var(--accent); color: var(--accent);
+    padding: 10px 20px; border-radius: 8px; font-family: 'Syne', sans-serif; font-weight: 600;
+    font-size: 0.82rem; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    z-index: 200; align-items: flex-end; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px 14px 0 0;
+    padding: 20px; width: 100%; max-width: 600px; max-height: 80vh; overflow-y: auto;
+    padding-bottom: calc(20px + var(--safe-bottom));
+  }
+  .modal-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; margin-bottom: 14px; display: flex; justify-content: space-between; }
+  .modal-close { background: none; border: none; color: var(--muted); font-size: 1.3rem; cursor: pointer; }
+
+  @media (max-width: 380px) {
+    .form-row { grid-template-columns: 1fr; }
+    .job-payments { grid-template-columns: 1fr 1fr; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* Install banner */
+  #install-banner {
+    display: none; background: #1a1400; border: 1px solid #5a4010;
+    border-radius: var(--radius); padding: 12px 16px; margin-bottom: 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  #install-banner .install-text { font-size: 0.78rem; color: var(--accent); flex: 1; }
+  #install-banner .install-btn {
+    background: var(--accent); color: #000; border: none; padding: 7px 14px;
+    border-radius: 6px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.75rem; cursor: pointer;
+  }
+  #install-banner .dismiss-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Cater<span>Log</span></div>
+  <div class="header-right">
+    <div class="icon-btn" onclick="openBackup()" title="Backup & Restore">💾</div>
+  </div>
+</header>
+
+<!-- VIEWS -->
+<div class="view active" id="view-dashboard">
+  <div id="install-banner" style="display:none">
+    <div class="install-text">📲 Install CaterLog as an app on your device</div>
+    <button class="install-btn" onclick="installApp()">Install</button>
+    <button class="dismiss-btn" onclick="dismissInstall()">✕</button>
+  </div>
+  <div class="stats-grid" id="stat-cards"></div>
+  <div class="section-header"><div class="section-title">Recent Jobs</div></div>
+  <div id="recent-jobs-list"></div>
+</div>
+
+<div class="view" id="view-jobs">
+  <div class="filter-bar">
+    <input type="text" id="filter-employer" placeholder="Search employer..." oninput="renderJobs()">
+    <input type="date" id="filter-date" oninput="renderJobs()">
+  </div>
+  <div class="filter-bar">
+    <select id="filter-status" onchange="renderJobs()">
+      <option value="">All payment statuses</option>
+      <option value="pending">Employer pending</option>
+      <option value="paid">Employer paid</option>
+    </select>
+    <select id="filter-type" onchange="renderJobs()">
+      <option value="">All work types</option>
+      <option>Wedding</option><option>Reception</option>
+      <option>Night Shift</option><option>Day Shift</option>
+      <option>Corporate Event</option><option>Birthday Party</option><option>Other</option>
+    </select>
+  </div>
+  <div id="jobs-list"></div>
+</div>
+
+<div class="view" id="view-add">
+  <div class="form-section">
+    <div class="form-section-title">📋 Job Details</div>
+    <div class="form-row">
+      <div class="field-group">
+        <label>Date</label>
+        <input type="date" id="f-date">
+      </div>
+      <div class="field-group">
+        <label>Employer</label>
+        <input type="text" id="f-employer" placeholder="Employer name">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field-group">
+        <label>Work Site / Location</label>
+        <input type="text" id="f-site" placeholder="Venue / address">
+      </div>
+      <div class="field-group">
+        <label>Work Type</label>
+        <select id="f-type">
+          <option>Wedding</option><option>Reception</option>
+          <option>Night Shift</option><option>Day Shift</option>
+          <option>Corporate Event</option><option>Birthday Party</option><option>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field-group">
+        <label>My Pay Rate (₹)</label>
+        <input type="number" id="f-my-rate" placeholder="e.g. 550">
+      </div>
+      <div class="field-group">
+        <label>Assigned By (optional)</label>
+        <input type="text" id="f-assigned-by" placeholder="If via someone else">
+      </div>
+    </div>
+    <div class="form-row single">
+      <div class="field-group">
+        <label>Notes</label>
+        <textarea id="f-notes" placeholder="Any extra details..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="form-section-title">👥 Sub-Workers</div>
+    <div id="boys-container"></div>
+    <button class="add-boy-btn" onclick="addBoyField()">+ Add sub-worker</button>
+    <div style="font-size:0.68rem;color:var(--muted);margin-top:-4px;margin-bottom:14px">Leave empty if working alone.</div>
+  </div>
+
+  <button class="btn-primary" onclick="saveJob()">💾 Save Job</button>
+</div>
+
+<div class="view" id="view-summary">
+  <div class="section-header"><div class="section-title">By Employer</div></div>
+  <div class="table-wrap">
+    <table class="summary-table">
+      <thead><tr><th>Employer</th><th>Jobs</th><th>Total Owed</th><th>Pending</th></tr></thead>
+      <tbody id="employer-summary"></tbody>
+    </table>
+  </div>
+  <div class="section-header"><div class="section-title">Sub-Workers Owed</div></div>
+  <div class="table-wrap">
+    <table class="summary-table">
+      <thead><tr><th>Name</th><th>Jobs</th><th>Total</th><th>Pending</th></tr></thead>
+      <tbody id="boys-summary"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="switchTab('dashboard')" id="nav-dashboard">
+    <span class="nav-icon">🏠</span>Home
+  </button>
+  <button class="nav-item" onclick="switchTab('jobs')" id="nav-jobs">
+    <span class="nav-icon">📋</span>Jobs
+  </button>
+  <button class="nav-item add-btn" onclick="switchTab('add')" id="nav-add">
+    <span class="nav-icon">＋</span>Add
+  </button>
+  <button class="nav-item" onclick="switchTab('summary')" id="nav-summary">
+    <span class="nav-icon">📊</span>Summary
+  </button>
+</nav>
+
+<!-- BACKUP MODAL -->
+<div class="modal-overlay" id="backup-modal">
+  <div class="modal">
+    <div class="modal-title">
+      💾 Backup & Restore
+      <button class="modal-close" onclick="closeBackup()">✕</button>
+    </div>
+    <div class="backup-panel">
+      <div class="backup-title">Export Data</div>
+      <p style="font-size:0.75rem;color:var(--muted);margin-bottom:12px">Save all your jobs to a file. Keep it safe — you can restore from it anytime.</p>
+      <button class="btn-export" style="width:100%;padding:12px;border-radius:8px;font-family:'DM Mono',monospace;font-size:0.82rem;cursor:pointer" onclick="exportData()">⬇️ Download Backup File</button>
+    </div>
+    <div class="backup-panel">
+      <div class="backup-title">Restore Data</div>
+      <p style="font-size:0.75rem;color:var(--muted);margin-bottom:12px">Load a previously exported backup file. This will replace current data.</p>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+      <button class="btn-import" style="width:100%;padding:12px;border-radius:8px;font-family:'DM Mono',monospace;font-size:0.82rem;cursor:pointer" onclick="document.getElementById('import-file').click()">⬆️ Load Backup File</button>
+    </div>
+    <div style="font-size:0.7rem;color:var(--muted);text-align:center;margin-top:4px">
+      Tip: Back up regularly to Google Drive or WhatsApp saved messages.
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'caterlog_jobs_v2';
+let deferredInstallPrompt = null;
+
+// PWA Install
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if (!localStorage.getItem('install_dismissed')) {
+    document.getElementById('install-banner').style.display = 'flex';
+  }
+});
+function installApp() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then(() => {
+      document.getElementById('install-banner').style.display = 'none';
+      deferredInstallPrompt = null;
+    });
+  }
+}
+function dismissInstall() {
+  document.getElementById('install-banner').style.display = 'none';
+  localStorage.setItem('install_dismissed', '1');
+}
+
+// SERVICE WORKER
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+function getJobs() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; }
+}
+function saveJobs(jobs) { localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs)); }
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// EXPORT / IMPORT
+function exportData() {
+  const jobs = getJobs();
+  const blob = new Blob([JSON.stringify({ version: 2, exported: new Date().toISOString(), jobs }, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `caterlog-backup-${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✓ Backup downloaded!');
+}
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      const jobs = data.jobs || data;
+      if (!Array.isArray(jobs)) throw new Error();
+      if (!confirm(`Import ${jobs.length} jobs? This will replace your current data.`)) return;
+      saveJobs(jobs);
+      renderAll();
+      closeBackup();
+      showToast(`✓ Restored ${jobs.length} jobs!`);
+    } catch { showToast('❌ Invalid backup file'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+function openBackup() { document.getElementById('backup-modal').classList.add('open'); }
+function closeBackup() { document.getElementById('backup-modal').classList.remove('open'); }
+document.getElementById('backup-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('backup-modal')) closeBackup();
+});
+
+let boyCount = 0;
+function addBoyField(name='', share='') {
+  boyCount++;
+  const id = boyCount;
+  const div = document.createElement('div');
+  div.className = 'boy-entry'; div.id = 'boy-' + id;
+  div.innerHTML = `
+    <button class="remove-boy" onclick="document.getElementById('boy-${id}').remove()">✕</button>
+    <div class="form-row">
+      <div class="field-group">
+        <label>Name</label>
+        <input type="text" class="boy-name-input" value="${name}" placeholder="Sub-worker name">
+      </div>
+      <div class="field-group">
+        <label>Pay Share (₹)</label>
+        <input type="number" class="boy-share-input" value="${share}" placeholder="e.g. 400">
+      </div>
+    </div>`;
+  document.getElementById('boys-container').appendChild(div);
+}
+
+function saveJob() {
+  const date = document.getElementById('f-date').value;
+  const employer = document.getElementById('f-employer').value.trim();
+  const site = document.getElementById('f-site').value.trim();
+  const type = document.getElementById('f-type').value;
+  const myRate = parseFloat(document.getElementById('f-my-rate').value) || 0;
+  const assignedBy = document.getElementById('f-assigned-by').value.trim();
+  const notes = document.getElementById('f-notes').value.trim();
+  if (!date || !employer || !myRate) { showToast('Fill: date, employer & pay rate'); return; }
+  const boys = [];
+  document.querySelectorAll('.boy-entry').forEach(entry => {
+    const nm = entry.querySelector('.boy-name-input').value.trim();
+    const sh = parseFloat(entry.querySelector('.boy-share-input').value) || 0;
+    if (nm) boys.push({ name: nm, share: sh, paid: false });
+  });
+  const boysTotal = boys.reduce((s, b) => s + b.share, 0);
+  const job = { id: Date.now(), date, employer, site, type, myRate, assignedBy, notes, boys, boysTotal, totalOwedByEmployer: myRate + boysTotal, employerPaid: false };
+  const jobs = getJobs(); jobs.unshift(job); saveJobs(jobs);
+  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('f-employer').value = '';
+  document.getElementById('f-site').value = '';
+  document.getElementById('f-my-rate').value = '';
+  document.getElementById('f-assigned-by').value = '';
+  document.getElementById('f-notes').value = '';
+  document.getElementById('boys-container').innerHTML = ''; boyCount = 0;
+  showToast('✓ Job saved!');
+  switchTab('jobs');
+}
+
+function toggleBoyPaid(jobId, boyIdx) {
+  const jobs = getJobs(); const job = jobs.find(j => j.id === jobId); if (!job) return;
+  job.boys[boyIdx].paid = !job.boys[boyIdx].paid; saveJobs(jobs); renderAll();
+}
+function toggleEmployerPaid(jobId) {
+  const jobs = getJobs(); const job = jobs.find(j => j.id === jobId); if (!job) return;
+  job.employerPaid = !job.employerPaid; saveJobs(jobs); renderAll();
+}
+function deleteJob(jobId) {
+  if (!confirm('Delete this job?')) return;
+  saveJobs(getJobs().filter(j => j.id !== jobId)); showToast('Deleted'); renderAll();
+}
+
+function formatDate(d) {
+  if (!d) return '';
+  const [y,m,day] = d.split('-');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${parseInt(day)} ${months[parseInt(m)-1]} ${y}`;
+}
+
+function jobCard(job) {
+  const boysRows = job.boys.map((b, i) => `
+    <div class="boy-row">
+      <span>${b.name}</span>
+      <span style="color:var(--accent2);font-weight:500">₹${b.share.toLocaleString()}</span>
+      <span class="boy-status ${b.paid?'paid':'pending'}" onclick="toggleBoyPaid(${job.id},${i})">${b.paid?'✓ Paid':'Pending'}</span>
+    </div>`).join('');
+  return `<div class="job-card">
+    <div class="job-card-header">
+      <div>
+        <div class="job-employer">${job.employer}</div>
+        ${job.assignedBy?`<div style="font-size:0.68rem;color:var(--muted)">via ${job.assignedBy}</div>`:''}
+      </div>
+      <div class="job-date">${formatDate(job.date)}</div>
+    </div>
+    <div class="job-meta">
+      <span class="badge badge-type">${job.type}</span>
+      <span class="badge badge-site">📍 ${job.site||'No site'}</span>
+      ${job.boys.length?`<span class="badge badge-boys">👥 ${job.boys.length} boy${job.boys.length>1?'s':''}</span>`:''}
+    </div>
+    <div class="job-payments">
+      <div class="pay-block owed"><div class="plabel">Emp. Owes</div><div class="pamount">₹${job.totalOwedByEmployer.toLocaleString()}</div></div>
+      <div class="pay-block boys-pay"><div class="plabel">I Owe Boys</div><div class="pamount">₹${job.boysTotal.toLocaleString()}</div></div>
+      <div class="pay-block net"><div class="plabel">My Net</div><div class="pamount">₹${job.myRate.toLocaleString()}</div></div>
+    </div>
+    ${job.boys.length?`<div class="boys-section"><div class="boys-title">Sub-Workers</div>${boysRows}</div>`:''}
+    <div class="employer-status-row">
+      <button class="emp-status-btn ${job.employerPaid?'paid':'pending'}" onclick="toggleEmployerPaid(${job.id})">${job.employerPaid?'✓ Employer Paid':'⏳ Emp. Pending'}</button>
+      <button class="delete-btn" onclick="deleteJob(${job.id})">Delete</button>
+    </div>
+    ${job.notes?`<div style="font-size:0.7rem;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">${job.notes}</div>`:''}
+  </div>`;
+}
+
+function renderDashboard() {
+  const jobs = getJobs();
+  const totalOwed = jobs.filter(j=>!j.employerPaid).reduce((s,j)=>s+j.totalOwedByEmployer,0);
+  const owesBoys = jobs.reduce((s,j)=>s+j.boys.filter(b=>!b.paid).reduce((ss,b)=>ss+b.share,0),0);
+  const collected = jobs.filter(j=>j.employerPaid).reduce((s,j)=>s+j.myRate,0);
+  document.getElementById('stat-cards').innerHTML = `
+    <div class="stat-card accent-card"><div class="label">Total Jobs</div><div class="value">${jobs.length}</div></div>
+    <div class="stat-card green-card"><div class="label">Owed to Me</div><div class="value">₹${totalOwed.toLocaleString()}</div></div>
+    <div class="stat-card red-card"><div class="label">I Owe Boys</div><div class="value">₹${owesBoys.toLocaleString()}</div></div>
+    <div class="stat-card orange-card"><div class="label">My Net Earned</div><div class="value">₹${collected.toLocaleString()}</div></div>`;
+  const recent = jobs.slice(0,5);
+  document.getElementById('recent-jobs-list').innerHTML = recent.length ? recent.map(jobCard).join('') : `<div class="empty-state"><div class="icon">🍽️</div><div>No jobs yet.<br>Tap the + button to add your first job.</div></div>`;
+}
+
+function renderJobs() {
+  const jobs = getJobs();
+  const emp = document.getElementById('filter-employer').value.toLowerCase();
+  const date = document.getElementById('filter-date').value;
+  const status = document.getElementById('filter-status').value;
+  const type = document.getElementById('filter-type').value;
+  const filtered = jobs.filter(j => {
+    if (emp && !j.employer.toLowerCase().includes(emp)) return false;
+    if (date && j.date !== date) return false;
+    if (status === 'pending' && j.employerPaid) return false;
+    if (status === 'paid' && !j.employerPaid) return false;
+    if (type && j.type !== type) return false;
+    return true;
+  });
+  document.getElementById('jobs-list').innerHTML = filtered.length ? filtered.map(jobCard).join('') : `<div class="empty-state"><div class="icon">🔍</div><div>No jobs match your filters.</div></div>`;
+}
+
+function renderSummary() {
+  const jobs = getJobs();
+  const empMap = {};
+  jobs.forEach(j => {
+    if (!empMap[j.employer]) empMap[j.employer] = { jobs:0, total:0, pending:0 };
+    empMap[j.employer].jobs++;
+    empMap[j.employer].total += j.totalOwedByEmployer;
+    if (!j.employerPaid) empMap[j.employer].pending += j.totalOwedByEmployer;
+  });
+  document.getElementById('employer-summary').innerHTML = Object.entries(empMap).map(([emp,d]) =>
+    `<tr><td style="font-weight:500">${emp}</td><td style="color:var(--muted)">${d.jobs}</td><td style="color:var(--green)">₹${d.total.toLocaleString()}</td><td style="color:${d.pending>0?'#f0a000':'var(--green)'}">₹${d.pending.toLocaleString()}</td></tr>`
+  ).join('') || '<tr><td colspan="4" style="color:var(--muted);padding:16px;text-align:center">No data yet</td></tr>';
+
+  const boysMap = {};
+  jobs.forEach(j => j.boys.forEach(b => {
+    if (!boysMap[b.name]) boysMap[b.name] = { jobs:0, total:0, pending:0 };
+    boysMap[b.name].jobs++;
+    boysMap[b.name].total += b.share;
+    if (!b.paid) boysMap[b.name].pending += b.share;
+  }));
+  document.getElementById('boys-summary').innerHTML = Object.entries(boysMap).map(([name,d]) =>
+    `<tr><td style="font-weight:500">${name}</td><td style="color:var(--muted)">${d.jobs}</td><td style="color:var(--accent2)">₹${d.total.toLocaleString()}</td><td style="color:${d.pending>0?'#f0a000':'var(--green)'}">₹${d.pending.toLocaleString()}</td></tr>`
+  ).join('') || '<tr><td colspan="4" style="color:var(--muted);padding:16px;text-align:center">No sub-workers logged</td></tr>';
+}
+
+function renderAll() { renderDashboard(); renderJobs(); renderSummary(); }
+
+function switchTab(tab) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + tab).classList.add('active');
+  document.getElementById('nav-' + tab).classList.add('active');
+}
+
+document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+renderAll();
+</script>
+</body>
+</html>
